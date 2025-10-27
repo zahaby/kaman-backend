@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "DbConnectionString": "Server=your-server.database.windows.net;Database=KamanDb;User Id=your-username;Password=your-password;Encrypt=True;",
+    "JwtSecret": "your-super-secret-jwt-key-change-this-in-production-minimum-32-characters",
+    "JwtExpiresInMinutes": "60",
+    "JwtRefreshSecret": "your-super-secret-refresh-token-key-change-this-in-production",
+    "JwtRefreshExpiresInDays": "7",
+    "DefaultPassword": "Kaman@2025",
+    "Environment": "Development"
+  }
+}
