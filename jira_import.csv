@@ -1,0 +1,185 @@
+Issue Type,Summary,Description,Epic Name,Epic Link,Story Points,Acceptance Criteria,Sprint
+Epic,Company Authentication & Authorization,Implement secure company login and access control system,Authentication,,,,"Sprint 1, Sprint 6"
+Story,Company Registration,"As a company admin, I want to register my company account so that I can access the gift card marketplace",,Authentication,8,"- Given I am on the registration page, when I submit valid company details, then my account is created successfully
+- Given I submit the registration form, when the email already exists, then I see an error message
+- Given I create an account, when registration is successful, then I receive a verification email
+- Given I receive a verification email, when I click the verification link, then my account is activated
+- Given I try to log in, when my account is not verified, then I see Please verify your email first
+- Given I enter company details, when any required field is missing, then I see appropriate validation errors
+- Given I enter a password, when it doesn't meet security requirements, then I see password strength requirements
+- Given I complete registration, when successful, then I am redirected to the login page with a success message",Sprint 6
+Story,Company Login,"As a company user, I want to log in with my credentials so that I can access the platform",,Authentication,8,"- Given I am on the login page, when I enter valid credentials, then I am logged in and redirected to the dashboard
+- Given I enter credentials, when they are invalid, then I see Invalid email or password
+- Given I check Remember Me, when I close and reopen the browser, then I am still logged in
+- Given I click Forgot Password, when I enter my email, then I receive a password reset link
+- Given I receive a reset link, when I click it and enter a new password, then my password is updated
+- Given I attempt login, when I fail 5 times, then my account is temporarily locked for 15 minutes
+- Given I log in successfully, when I receive a JWT token, then it expires after 24 hours
+- Given I am logged in, when my token expires, then I am redirected to login with a Session expired message
+- Given I log in, when successful, then my session is tracked in the database",Sprint 1
+Story,Role-Based Access Control,"As a company admin, I want to manage user roles and permissions within my organization",,Authentication,8,"- Given I am a company admin, when I access user management, then I can view all users in my organization
+- Given I am a company admin, when I invite a new user, then they receive an invitation email
+- Given I invite a user, when I assign them a role, then they have appropriate permissions
+- Given I am an Admin, when I try to access admin features, then I have full access
+- Given I am a Manager, when I try to access order history and placement, then I have access
+- Given I am a User, when I try to access user management, then I see Access denied
+- Given I am a company admin, when I deactivate a user, then they cannot log in
+- Given a user is deactivated, when they try to log in, then they see Account has been deactivated",Sprint 1
+Epic,Gift Card Marketplace,Integrate with Resal API to display filter and search gift cards,Marketplace,,,,"Sprint 1, Sprint 2"
+Story,Resal API Integration,"As a developer, I want to integrate with Resal API so that we can fetch available gift cards",,Marketplace,13,"- Given the system starts, when it connects to Resal API, then authentication is successful
+- Given I request gift cards, when the API call succeeds, then I receive a list of available gift cards
+- Given I request gift cards, when Resal API is down, then the system retries 3 times with exponential backoff
+- Given I fetch gift cards, when data is received, then it is transformed to our internal format
+- Given gift card data is fetched, when it's less than 1 hour old, then cached data is returned
+- Given the Resal API returns an error, when it occurs, then it is logged and a user-friendly message is shown
+- Given I request gift card details, when the API call succeeds, then all relevant fields are mapped correctly",Sprint 1
+Story,Gift Card Listing Page,"As a company user, I want to view available gift cards so that I can browse options",,Marketplace,8,"- Given I navigate to the marketplace, when the page loads, then I see a grid of gift cards
+- Given gift cards are displayed, when I view a card, then I see image brand name price and Add to Cart button
+- Given there are more than 20 gift cards, when I scroll to the bottom, then the next page loads automatically
+- Given the page is loading, when gift cards are being fetched, then I see a loading skeleton
+- Given the API fails, when an error occurs, then I see Unable to load gift cards
+- Given I am on mobile, when I view the listing, then the layout is responsive
+- Given there are no gift cards available, when the page loads, then I see No gift cards available",Sprint 2
+Story,Gift Card Filtering,"As a company user, I want to filter gift cards by category price range and brand",,Marketplace,8,"- Given I am on the marketplace, when I click Filters, then a filter panel opens
+- Given the filter panel is open, when I select a category, then only gift cards in that category are shown
+- Given I set a price range, when I apply it, then only gift cards within that range are shown
+- Given I select multiple brands, when I apply the filter, then only gift cards from those brands are shown
+- Given I apply multiple filters, when I click Clear All, then all filters are removed
+- Given I apply filters, when I navigate away and come back, then my filters are preserved
+- Given I apply filters, when no results match, then I see No gift cards match your criteria
+- Given I select filters, when I apply them, then the gift card count updates in real-time",Sprint 2
+Story,Gift Card Search,"As a company user, I want to search for specific gift cards by name or brand",,Marketplace,5,"- Given I am on the marketplace, when I type in the search box, then results update after 500ms
+- Given I type a search term, when matches are found, then only matching gift cards are displayed
+- Given I search for a brand name, when I type Ama, then I see suggestions like Amazon
+- Given I search for a term, when the search term is highlighted, then it appears in bold
+- Given I search for a term, when no results match, then I see No results found
+- Given I type a search, when I clear it, then all gift cards are shown again
+- Given I have filters applied, when I search, then search works within the filtered results",Sprint 2
+Story,Gift Card Details View,"As a company user, I want to view detailed information about a gift card",,Marketplace,5,"- Given I click on a gift card, when the detail view opens, then I see full description terms and pricing
+- Given I view gift card details, when the card is out of stock, then the Add to Cart button is disabled
+- Given I view details, when I click Add to Cart, then the item is added and I see a success message
+- Given I am on the detail view, when I click Close, then it closes and I return to the listing
+- Given I view details, when there are multiple denominations available, then I can select the amount",Sprint 2
+Epic,Shopping Cart Management,Enable users to add and manage gift cards in their shopping cart,Shopping Cart,,,,Sprint 2-3
+Story,Add to Cart Functionality,"As a company user, I want to add gift cards to my cart so that I can purchase multiple items",,Shopping Cart,8,"- Given I am viewing a gift card, when I click Add to Cart, then the item is added to my cart
+- Given I add an item to cart, when successful, then I see a success notification
+- Given I add an item, when it's already in my cart, then the quantity increases by 1
+- Given I add an item, when I select a quantity, then that quantity is added to the cart
+- Given I add an item to cart, when successful, then the cart icon shows the updated item count
+- Given I am not logged in, when I add items to cart, then they are saved in local storage
+- Given I log in, when I had items in local storage, then they are merged with my server-side cart",Sprint 2
+Story,View Shopping Cart,"As a company user, I want to view my cart contents so that I can review my selections",,Shopping Cart,5,"- Given I click the cart icon, when the cart page loads, then I see all items I added
+- Given I view my cart, when it has items, then I see item details and subtotals
+- Given I view my cart, when it has items, then I see the total cost at the bottom
+- Given my cart is empty, when I view it, then I see Your cart is empty
+- Given I view my cart, when items are shown, then I see Proceed to Checkout button
+- Given I have cart items, when I close the browser and reopen, then my cart items persist",Sprint 3
+Story,Update Cart Items,"As a company user, I want to modify quantities or remove items from my cart",,Shopping Cart,5,"- Given I view my cart, when I increase quantity, then the subtotal and total update immediately
+- Given I view my cart, when I decrease quantity to 0, then the item is removed
+- Given I view my cart, when I click Remove on an item, then it is removed with a confirmation
+- Given I view my cart, when I click Clear Cart, then I see a confirmation dialog
+- Given I confirm clear cart, when confirmed, then all items are removed
+- Given I update quantities, when I navigate away and return, then the quantities are preserved
+- Given I change quantities, when I update, then the cart icon count updates",Sprint 3
+Story,Cart Validation,"As a system, I want to validate cart contents before checkout",,Shopping Cart,5,"- Given I proceed to checkout, when an item is out of stock, then I see Item is no longer available
+- Given I proceed to checkout, when a price has changed, then I see Price has changed
+- Given I proceed to checkout, when validation fails, then the Proceed button is disabled
+- Given my cart has issues, when I view them, then invalid items are highlighted with error messages
+- Given I have more than 100 items in cart, when I add more, then I see Cart limit reached",Sprint 3
+Epic,Bulk Order Processing via Excel,Enable bulk gift card assignment through Excel file upload,Excel Processing,,,,Sprint 3-4
+Story,Excel Template Design,"As a company user, I want to download an Excel template so that I can properly format recipient data",,Excel Processing,3,"- Given I am on the checkout page, when I click Download Template, then an Excel file is downloaded
+- Given I open the template, when I view it, then I see required columns
+- Given I open the template, when I view it, then I see instructions
+- Given I view instructions, when I read them, then I understand the format requirements
+- Given the template is downloaded, when opened, then it has example data",Sprint 3
+Story,Excel File Upload,"As a company user, I want to upload an Excel file with recipient details",,Excel Processing,5,"- Given I am on the checkout page, when I click Upload Recipients, then a file picker opens
+- Given I select a file, when it's larger than 10MB, then I see File too large
+- Given I select a file, when it's not xlsx or xls, then I see Invalid file format
+- Given I drag and drop a file, when it's a valid Excel file, then it uploads successfully
+- Given I upload a file, when uploading, then I see a progress bar
+- Given upload is successful, when complete, then I see File uploaded successfully",Sprint 3
+Story,Excel Data Parsing & Validation,"As a system, I want to parse and validate the uploaded Excel file",,Excel Processing,13,"- Given a file is uploaded, when it's parsed, then all rows with data are extracted
+- Given the file is parsed, when required columns are missing, then I see error message
+- Given I upload data, when an email is invalid, then I see Invalid email format
+- Given I upload data, when there are duplicate emails, then I see Duplicate emails found
+- Given I upload data, when a gift card name doesn't match my cart, then I see error
+- Given I upload data, when amounts don't match available denominations, then I see error
+- Given validation finds errors, when complete, then I see a detailed error report
+- Given the file is valid, when parsing is complete, then I see success message
+- Given the file has more than 1000 rows, when uploaded, then I see Maximum 1000 recipients",Sprint 3
+Story,Assignment Preview,"As a company user, I want to preview the gift card assignments before finalizing",,Excel Processing,8,"- Given validation succeeds, when I view the preview, then I see a table with all parsed recipients
+- Given I view the preview, when I see the data, then I can see all recipient details
+- Given I view the preview, when there are validation warnings, then they are highlighted
+- Given I view the preview, when I click Edit, then I can modify individual rows
+- Given I view the preview, when I click Re-upload, then I can upload a new file
+- Given I view the preview, when I scroll to the bottom, then I see a summary
+- Given I review the data, when I click Proceed to Order, then I move to finalization",Sprint 4
+Epic,Order Management,Handle order placement processing and finalization,Orders,,,,Sprint 4-6
+Story,Order Review Page,"As a company user, I want to review my order details before placing it",,Orders,5,"- Given I proceed from preview, when the order review page loads, then I see order summary
+- Given I view the order review, when I see the cost breakdown, then it shows all fees
+- Given I view the summary, when I click Edit Cart, then I return to the cart page
+- Given I view the summary, when I click Edit Recipients, then I return to upload page
+- Given I view the order, when I scroll down, then I see terms and conditions
+- Given I haven't agreed to terms, when I try to place order, then the button is disabled
+- Given I agree to terms, when I click Place Order, then the order is submitted",Sprint 4
+Story,Order Placement,"As a company user, I want to place my order so that gift cards can be processed",,Orders,8,"- Given I click Place Order, when the request is sent, then I see a loading indicator
+- Given the order is successful, when created, then I receive a unique order reference number
+- Given the order is successful, when created, then I am redirected to confirmation page
+- Given I view the confirmation page, when loaded, then I see order details
+- Given the order fails, when an error occurs, then I see the error message and can retry
+- Given the order is placed, when created, then the cart is cleared
+- Given the order is placed, when created, then a confirmation email is sent to me",Sprint 4
+Story,Order Processing with Resal,"As a system, I want to purchase gift cards from Resal API for the order",,Orders,13,"- Given an order is placed, when processing starts, then the order status is Processing
+- Given the order is processing, when gift cards are purchased, then each purchase is logged
+- Given a purchase succeeds, when the code is received, then it's stored securely
+- Given a purchase fails, when it happens, then the system retries up to 3 times
+- Given some purchases fail after retries, then the order is marked Partially Failed
+- Given all purchases succeed, when complete, then the order status is Completed
+- Given all purchases fail, when complete, then the order status is Failed
+- Given the order is processed, when complete, then the email distribution job is triggered",Sprint 4
+Story,Order History,"As a company user, I want to view my past orders and their status",,Orders,8,"- Given I navigate to My Orders, when the page loads, then I see a list of all my orders
+- Given I view my orders, when displayed, then each shows order details
+- Given I view my orders, when I click on an order, then I see the full order details
+- Given I view the order list, when I filter by date range, then only orders in that range are shown
+- Given I view the order list, when I filter by status, then only matching orders are shown
+- Given I have no orders, when I view the page, then I see No orders yet
+- Given I view an order, when I click Download Receipt, then a PDF receipt is generated",Sprint 5
+Story,Order Details & Tracking,"As a company user, I want to view detailed information about a specific order",,Orders,8,"- Given I click on an order, when the detail page loads, then I see full order information
+- Given I view order details, when I see the status, then I see a timeline
+- Given I view the recipient list, when displayed, then I see delivery status for each
+- Given an email failed, when I see it, then I can click Resend Email
+- Given I click Resend Email, when successful, then I see Email resent successfully
+- Given I view details, when I click Download Codes, then I get a CSV with all codes",Sprint 6
+Epic,Email Distribution System,Automated email delivery of gift card codes to recipients,Email System,,,,Sprint 5-6
+Story,Email Template Design,"As a company, I want professional email templates for gift card delivery",,Email System,5,"- Given an email is sent, when a recipient receives it, then they see all required elements
+- Given the email is viewed, when on mobile, then it displays correctly
+- Given the email is viewed, when on desktop, then it displays correctly
+- Given a recipient views the email, when they see the code, then it's displayed prominently
+- Given the email includes a custom message, when present, then it's displayed
+- Given the email is sent, when it includes a gift card, then it shows the brand logo",Sprint 5
+Story,Email Service Integration,"As a developer, I want to integrate an email service provider",,Email System,8,"- Given the system sends an email, when the service is called, then it successfully delivers
+- Given emails are sent, when rate limits exist, then the system respects them
+- Given an email is sent, when it's delivered, then the delivery status is tracked
+- Given an email is opened, when the recipient opens it, then an open event is recorded
+- Given an email link is clicked, when a recipient clicks it, then a click event is recorded
+- Given the email service fails, when an error occurs, then it's logged with full details",Sprint 5
+Story,Bulk Email Sending,"As a system, I want to send gift card codes to all recipients in an order",,Email System,13,"- Given an order is completed, when processing finishes, then emails are queued
+- Given emails are queued, when sending starts, then they are sent in batches
+- Given a recipient is in the list, when their email is sent, then they receive their code
+- Given an email fails to send, when it fails, then the system retries up to 3 times
+- Given an email fails after retries, when this happens, then it's marked as Failed
+- Given all emails are processed, when complete, then the order status is updated
+- Given emails are sending, when I view the order, then I see real-time progress",Sprint 5
+Story,Email Delivery Monitoring,"As a company user, I want to track email delivery status for my orders",,Email System,8,"- Given I view an order, when emails have been sent, then I see a delivery dashboard
+- Given I view the dashboard, when displayed, then I see delivery metrics
+- Given emails failed, when I view them, then I see a list with reasons
+- Given I see failed emails, when I click Resend Failed Emails, then all are queued
+- Given I view individual recipients, when I click on one, then I see their email history
+- Given I view email logs, when displayed, then I can filter by status",Sprint 6
+Story,Email Customization,"As a company admin, I want to customize email content and branding",,Email System,8,"- Given I am on email settings, when I upload a logo, then it appears in all future emails
+- Given I set a custom sender name, when emails are sent, then they show the custom name
+- Given I customize the email subject, when I enter variables, then they are replaced correctly
+- Given I customize the email body, when I add a custom message, then it appears in all emails
+- Given I make changes, when I click Preview, then I see how the email will look
+- Given I create a custom template, when I save it, then I can select it for future orders
+- Given I have multiple templates, when placing an order, then I can choose which to use",Post-Launch
