@@ -72,7 +72,7 @@ public class RefreshTokenFunction
             }
 
             // Generate new tokens
-            var jwtPayload = new JwtPayload
+            var jwtPayload = new UserTokenClaims
             {
                 UserId = user.UserId,
                 Email = user.Email,
