@@ -6,7 +6,7 @@ using KamanAzureFunctions.Helpers;
 using KamanAzureFunctions.Services;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWebApplication()
+    .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
