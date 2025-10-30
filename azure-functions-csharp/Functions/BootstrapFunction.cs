@@ -57,9 +57,9 @@ public class BootstrapFunction
 
             var existingSuperAdmins = await connection.QueryAsync<dynamic>(
                 @"SELECT u.UserId, u.Email
-                  FROM [identity].[Users] u
-                  JOIN [identity].[UserRoles] ur ON u.UserId = ur.UserId
-                  JOIN [identity].[Roles] r ON ur.RoleId = r.RoleId
+                  FROM [auth].[Users] u
+                  JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
+                  JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
                   WHERE r.RoleCode = 'SUPER_ADMIN'
                     AND u.DeletedAtUtc IS NULL
                     AND r.DeletedAtUtc IS NULL"
@@ -77,7 +77,7 @@ public class BootstrapFunction
 
             // Ensure SUPER_ADMIN role exists
             var superAdminRole = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                @"SELECT RoleId, RoleCode FROM [identity].[Roles]
+                @"SELECT RoleId, RoleCode FROM [auth].[Roles]
                   WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL"
             );
 
@@ -87,7 +87,7 @@ public class BootstrapFunction
                 _logger.LogInformation("Creating SUPER_ADMIN role");
 
                 superAdminRoleId = await connection.ExecuteScalarAsync<long>(
-                    @"INSERT INTO [identity].[Roles] (RoleCode, RoleName, Description, IsActive)
+                    @"INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive)
                       OUTPUT INSERTED.RoleId
                       VALUES ('SUPER_ADMIN', 'Super Administrator', 'Full system access', 1)"
                 );
@@ -117,7 +117,7 @@ public class BootstrapFunction
 
             // Insert the user
             var userId = await connection.ExecuteScalarAsync<long>(
-                @"INSERT INTO [identity].[Users] (
+                @"INSERT INTO [auth].[Users] (
                     CompanyId,
                     Email,
                     DisplayName,
@@ -146,7 +146,7 @@ public class BootstrapFunction
 
             // Assign SUPER_ADMIN role to the user
             await connection.ExecuteAsync(
-                @"INSERT INTO [identity].[UserRoles] (UserId, RoleId)
+                @"INSERT INTO [auth].[UserRoles] (UserId, RoleId)
                   VALUES (@UserId, @RoleId)",
                 new { UserId = userId, RoleId = superAdminRoleId }
             );
