@@ -7,12 +7,13 @@ using KamanAzureFunctions.Services;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
-    .ConfigureServices((context, services) =>
+    .ConfigureServices((hostContext, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        var configuration = context.Configuration;
+        // Get configuration
+        var configuration = hostContext.Configuration;
 
         // Register DatabaseHelper
         var connectionString = configuration["DbConnectionString"]
