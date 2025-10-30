@@ -13,15 +13,15 @@ SELECT
     u.IsActive,
     u.IsLocked,
     STRING_AGG(r.RoleCode, ', ') as Roles
-FROM [identity].[Users] u
-LEFT JOIN [identity].[UserRoles] ur ON u.UserId = ur.UserId
-LEFT JOIN [identity].[Roles] r ON ur.RoleId = r.RoleId
+FROM [auth].[Users] u
+LEFT JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
+LEFT JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
 WHERE u.DeletedAtUtc IS NULL
 GROUP BY u.UserId, u.Email, u.DisplayName, u.CompanyId, u.IsActive, u.IsLocked;
 
 -- 2. Check what roles exist in the system
 SELECT RoleId, RoleCode, RoleName, Description
-FROM [identity].[Roles]
+FROM [auth].[Roles]
 WHERE DeletedAtUtc IS NULL;
 
 -- ============================================
@@ -42,7 +42,7 @@ DECLARE @UserId BIGINT;
 DECLARE @SuperAdminRoleId BIGINT;
 
 -- Check if user already exists
-IF NOT EXISTS (SELECT 1 FROM [identity].[Users] WHERE Email = @SuperAdminEmail AND DeletedAtUtc IS NULL)
+IF NOT EXISTS (SELECT 1 FROM [auth].[Users] WHERE Email = @SuperAdminEmail AND DeletedAtUtc IS NULL)
 BEGIN
     -- BCrypt hash for "Kaman@2025"
     -- Note: You'll need to generate this using the actual BCrypt library
@@ -52,7 +52,7 @@ BEGIN
     PRINT 'Creating super admin user...';
 
     -- Insert the super admin user
-    INSERT INTO [identity].[Users] (
+    INSERT INTO [auth].[Users] (
         CompanyId,
         Email,
         DisplayName,
@@ -76,13 +76,13 @@ BEGIN
 
     -- Get the SUPER_ADMIN role ID
     SELECT @SuperAdminRoleId = RoleId
-    FROM [identity].[Roles]
+    FROM [auth].[Roles]
     WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL;
 
     IF @SuperAdminRoleId IS NOT NULL
     BEGIN
         -- Assign SUPER_ADMIN role to the user
-        INSERT INTO [identity].[UserRoles] (UserId, RoleId)
+        INSERT INTO [auth].[UserRoles] (UserId, RoleId)
         VALUES (@UserId, @SuperAdminRoleId);
 
         PRINT 'SUPER_ADMIN role assigned successfully';
@@ -91,7 +91,7 @@ BEGIN
     BEGIN
         PRINT 'ERROR: SUPER_ADMIN role not found in the database!';
         PRINT 'You may need to insert the role first:';
-        PRINT 'INSERT INTO [identity].[Roles] (RoleCode, RoleName, Description, IsActive) VALUES (''SUPER_ADMIN'', ''Super Administrator'', ''Full system access'', 1);';
+        PRINT 'INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive) VALUES (''SUPER_ADMIN'', ''Super Administrator'', ''Full system access'', 1);';
     END
 END
 ELSE
@@ -102,11 +102,11 @@ END
 -- ============================================
 -- 4. ALTERNATIVE: Create SUPER_ADMIN role if it doesn't exist
 -- ============================================
-IF NOT EXISTS (SELECT 1 FROM [identity].[Roles] WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL)
+IF NOT EXISTS (SELECT 1 FROM [auth].[Roles] WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL)
 BEGIN
     PRINT 'Creating SUPER_ADMIN role...';
 
-    INSERT INTO [identity].[Roles] (RoleCode, RoleName, Description, IsActive)
+    INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive)
     VALUES ('SUPER_ADMIN', 'Super Administrator', 'Full system access', 1);
 
     PRINT 'SUPER_ADMIN role created successfully';
@@ -127,7 +127,7 @@ SELECT
     u.IsActive,
     u.IsLocked,
     u.CreatedAtUtc
-FROM [identity].[Users] u
+FROM [auth].[Users] u
 WHERE u.Email = 'superadmin@kaman.com' AND u.DeletedAtUtc IS NULL;
 
 -- Check the user's roles
@@ -135,9 +135,9 @@ SELECT
     u.Email,
     r.RoleCode,
     r.RoleName
-FROM [identity].[Users] u
-JOIN [identity].[UserRoles] ur ON u.UserId = ur.UserId
-JOIN [identity].[Roles] r ON ur.RoleId = r.RoleId
+FROM [auth].[Users] u
+JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
+JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
 WHERE u.Email = 'superadmin@kaman.com' AND u.DeletedAtUtc IS NULL;
 
 PRINT '========================================';
