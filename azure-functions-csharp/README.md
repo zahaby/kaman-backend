@@ -246,6 +246,76 @@ The API will be available at `http://localhost:7071/api`
 }
 ```
 
+## Admin Endpoints
+
+### 6. Bootstrap (Create First Super Admin)
+**Endpoint**: `POST /api/bootstrap/super-admin`
+
+**Authorization**: None (requires bootstrap secret)
+
+**When to Use**: Only for initial setup when no super admin exists
+
+**Request Body**:
+```json
+{
+  "BootstrapSecret": "KamanBootstrap2025!",
+  "Email": "admin@company.com",
+  "DisplayName": "Administrator",
+  "Password": "SecurePassword123!"
+}
+```
+
+**Response**:
+```json
+{
+  "Success": true,
+  "Message": "Bootstrap completed successfully",
+  "Data": {
+    "UserId": 1,
+    "Email": "admin@company.com",
+    "DisplayName": "Administrator"
+  }
+}
+```
+
+**Security Note**: This endpoint can only be used once (before any super admin exists). See [BOOTSTRAP_GUIDE.md](BOOTSTRAP_GUIDE.md) for details.
+
+### 7. Reset Super Admin Password
+**Endpoint**: `POST /api/admin/reset-superadmin-password`
+
+**Authorization**: None (requires reset secret)
+
+**When to Use**: Emergency password reset for super admin accounts
+
+**Request Body**:
+```json
+{
+  "ResetSecret": "KamanResetSecret2025!",
+  "Email": "admin@company.com",
+  "NewPassword": "NewSecurePassword123!"
+}
+```
+
+**Response**:
+```json
+{
+  "Success": true,
+  "Message": "Super admin password reset successfully",
+  "Data": {
+    "UserId": 1,
+    "Email": "admin@company.com",
+    "Message": "Password reset successfully. The account has been unlocked and failed login attempts cleared."
+  }
+}
+```
+
+**What it does**:
+- Resets the password
+- Unlocks the account
+- Clears failed login attempts
+
+**Security Note**: Keep the reset secret secure. See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete security guidelines.
+
 ## Authentication
 
 All protected endpoints require a JWT access token in the Authorization header:

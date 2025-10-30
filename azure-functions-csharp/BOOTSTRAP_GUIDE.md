@@ -1,5 +1,7 @@
 # Bootstrap Guide - Creating Your First Super Admin User
 
+> **📚 For Complete Admin Operations**: See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for detailed documentation on bootstrap, password reset, and security best practices.
+
 ## Problem
 You're getting "Invalid email or password" because there are no users in your database yet. You need a super admin user to create companies and other users.
 
