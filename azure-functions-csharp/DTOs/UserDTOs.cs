@@ -71,7 +71,7 @@ public class SetPasswordResponse
     public string Message { get; set; } = "Password has been set successfully";
 }
 
-public class JwtPayload
+public class UserTokenClaims
 {
     public long UserId { get; set; }
     public string Email { get; set; } = string.Empty;

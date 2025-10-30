@@ -105,7 +105,7 @@ public class UserService
             transaction.Commit();
 
             // Generate tokens
-            var jwtPayload = new JwtPayload
+            var jwtPayload = new UserTokenClaims
             {
                 UserId = user.UserId,
                 Email = user.Email,
@@ -208,7 +208,7 @@ public class UserService
         await LogLoginAttemptAsync(email, user.UserId, true, null, ipAddress, userAgent);
 
         // Generate tokens
-        var jwtPayload = new JwtPayload
+        var jwtPayload = new UserTokenClaims
         {
             UserId = user.UserId,
             Email = user.Email,

@@ -24,7 +24,7 @@ public class JwtHelper
     /// <summary>
     /// Generate access and refresh tokens
     /// </summary>
-    public AuthenticationResponse GenerateTokens(JwtPayload payload)
+    public AuthenticationResponse GenerateTokens(UserTokenClaims payload)
     {
         var accessToken = GenerateAccessToken(payload);
         var refreshToken = GenerateRefreshToken(payload.UserId, payload.Email);
@@ -41,7 +41,7 @@ public class JwtHelper
     /// <summary>
     /// Generate access token
     /// </summary>
-    private string GenerateAccessToken(JwtPayload payload)
+    private string GenerateAccessToken(UserTokenClaims payload)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -104,7 +104,7 @@ public class JwtHelper
     /// <summary>
     /// Verify access token
     /// </summary>
-    public JwtPayload? VerifyAccessToken(string token)
+    public UserTokenClaims? VerifyAccessToken(string token)
     {
         try
         {
@@ -130,7 +130,7 @@ public class JwtHelper
             var companyIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "companyId");
             var roles = jwtToken.Claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).ToList();
 
-            return new JwtPayload
+            return new UserTokenClaims
             {
                 UserId = userId,
                 Email = email,

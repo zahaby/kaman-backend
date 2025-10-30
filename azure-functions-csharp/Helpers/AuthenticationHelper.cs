@@ -9,7 +9,7 @@ public static class AuthenticationHelper
     /// <summary>
     /// Authenticate request using JWT
     /// </summary>
-    public static (bool Authenticated, JwtPayload? User, string? Error) AuthenticateRequest(
+    public static (bool Authenticated, UserTokenClaims? User, string? Error) AuthenticateRequest(
         HttpRequestData req,
         JwtHelper jwtHelper)
     {
@@ -37,7 +37,7 @@ public static class AuthenticationHelper
     /// <summary>
     /// Check if user has required role
     /// </summary>
-    public static bool HasRole(JwtPayload user, string requiredRole)
+    public static bool HasRole(UserTokenClaims user, string requiredRole)
     {
         return user.Roles.Contains(requiredRole);
     }
@@ -45,7 +45,7 @@ public static class AuthenticationHelper
     /// <summary>
     /// Check if user is super admin
     /// </summary>
-    public static bool IsSuperAdmin(JwtPayload user)
+    public static bool IsSuperAdmin(UserTokenClaims user)
     {
         return HasRole(user, "SUPER_ADMIN");
     }
@@ -53,7 +53,7 @@ public static class AuthenticationHelper
     /// <summary>
     /// Check if user is company admin
     /// </summary>
-    public static bool IsCompanyAdmin(JwtPayload user)
+    public static bool IsCompanyAdmin(UserTokenClaims user)
     {
         return HasRole(user, "COMPANY_ADMIN");
     }
@@ -61,7 +61,7 @@ public static class AuthenticationHelper
     /// <summary>
     /// Check if user belongs to a specific company
     /// </summary>
-    public static bool BelongsToCompany(JwtPayload user, long companyId)
+    public static bool BelongsToCompany(UserTokenClaims user, long companyId)
     {
         return user.CompanyId == companyId;
     }
