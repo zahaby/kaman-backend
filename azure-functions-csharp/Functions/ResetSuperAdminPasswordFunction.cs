@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using KamanAzureFunctions.DTOs;
 using KamanAzureFunctions.Helpers;
 using Dapper;
+using System.Data;
 
 namespace KamanAzureFunctions.Functions;
 
@@ -74,14 +75,9 @@ public class ResetSuperAdminPasswordFunction
 
             // Verify the user exists and is a super admin
             var superAdmin = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                @"SELECT u.UserId, u.Email, u.DisplayName, u.IsActive
-                  FROM [auth].[Users] u
-                  JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
-                  JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
-                  WHERE u.Email = @Email
-                    AND r.Name = 'SUPER_ADMIN'
-                    AND u.DeletedAtUtc IS NULL",
-                new { Email = request.Email }
+                "[auth].[sp_VerifyUserIsSuperAdmin]",
+                new { Email = request.Email },
+                commandType: CommandType.StoredProcedure
             );
 
             if (superAdmin == null)
@@ -98,17 +94,13 @@ public class ResetSuperAdminPasswordFunction
 
             // Update the password
             var rowsAffected = await connection.ExecuteAsync(
-                @"UPDATE [auth].[Users]
-                  SET PasswordHash = @PasswordHash,
-                      IsLocked = 0,
-                      FailedLoginAttempts = 0,
-                      LastFailedLoginUtc = NULL
-                  WHERE UserId = @UserId",
+                "[auth].[sp_ResetPasswordAndUnlock]",
                 new
                 {
                     UserId = (long)superAdmin.UserId,
                     PasswordHash = passwordHash
-                }
+                },
+                commandType: CommandType.StoredProcedure
             );
 
             if (rowsAffected == 0)
