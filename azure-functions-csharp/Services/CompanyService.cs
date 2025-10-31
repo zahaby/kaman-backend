@@ -2,6 +2,7 @@ using Dapper;
 using KamanAzureFunctions.DTOs;
 using KamanAzureFunctions.Helpers;
 using KamanAzureFunctions.Models;
+using System.Data;
 
 namespace KamanAzureFunctions.Services;
 
@@ -28,10 +29,10 @@ public class CompanyService
         {
             // Check if company code already exists
             var existingCompany = await connection.QueryFirstOrDefaultAsync<Company>(
-                @"SELECT CompanyId FROM [core].[Companies]
-                  WHERE CompanyCode = @CompanyCode AND DeletedAtUtc IS NULL",
-                new { request.CompanyCode },
-                transaction
+                "[core].[sp_CheckCompanyCodeExists]",
+                new { CompanyCode = request.CompanyCode },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             if (existingCompany != null)
@@ -41,10 +42,10 @@ public class CompanyService
 
             // Check if email already exists
             var existingEmail = await connection.QueryFirstOrDefaultAsync<Company>(
-                @"SELECT CompanyId FROM [core].[Companies]
-                  WHERE Email = @Email AND DeletedAtUtc IS NULL",
-                new { request.Email },
-                transaction
+                "[core].[sp_CheckCompanyEmailExists]",
+                new { Email = request.Email },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             if (existingEmail != null)
@@ -52,43 +53,40 @@ public class CompanyService
                 throw new InvalidOperationException("Company email already exists");
             }
 
-            // Insert company (using SCOPE_IDENTITY to avoid trigger conflict)
-            var companyId = await connection.ExecuteScalarAsync<long>(
-                @"INSERT INTO [core].[Companies] (
-                    CompanyCode, Name, Email, Phone, Country, Address,
-                    DefaultCurrency, MinimumBalance, IsActive
-                  )
-                  VALUES (
-                    @CompanyCode, @Name, @Email, @Phone, @Country, @Address,
-                    @DefaultCurrency, @MinimumBalance, 1
-                  );
-                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
+            // Insert company
+            var companyIdResult = await connection.QuerySingleAsync<dynamic>(
+                "[core].[sp_InsertCompany]",
                 new
                 {
-                    request.CompanyCode,
-                    request.Name,
-                    request.Email,
-                    request.Phone,
-                    request.Country,
-                    request.Address,
-                    request.DefaultCurrency,
-                    request.MinimumBalance
+                    CompanyCode = request.CompanyCode,
+                    Name = request.Name,
+                    Email = request.Email,
+                    Phone = request.Phone,
+                    Country = request.Country,
+                    Address = request.Address,
+                    DefaultCurrency = request.DefaultCurrency,
+                    MinimumBalance = request.MinimumBalance
                 },
-                transaction
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
+
+            long companyId = companyIdResult.CompanyId;
 
             // Retrieve the inserted company
             var company = await connection.QuerySingleAsync<Company>(
-                @"SELECT * FROM [core].[Companies] WHERE CompanyId = @CompanyId",
+                "[core].[sp_GetCompanyById]",
                 new { CompanyId = companyId },
-                transaction
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             // The wallet is automatically created by the trigger, but we'll query it
             var wallet = await connection.QuerySingleAsync<Wallet>(
-                @"SELECT * FROM [wallet].[Wallets] WHERE CompanyId = @CompanyId",
-                new { company.CompanyId },
-                transaction
+                "[wallet].[sp_GetWalletByCompanyId]",
+                new { CompanyId = companyId },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             transaction.Commit();
@@ -109,9 +107,9 @@ public class CompanyService
     {
         using var connection = _dbHelper.GetConnection();
         return await connection.QueryFirstOrDefaultAsync<Company>(
-            @"SELECT * FROM [core].[Companies]
-              WHERE CompanyId = @CompanyId AND DeletedAtUtc IS NULL",
-            new { CompanyId = companyId }
+            "[core].[sp_GetCompanyById]",
+            new { CompanyId = companyId },
+            commandType: CommandType.StoredProcedure
         );
     }
 
@@ -122,9 +120,9 @@ public class CompanyService
     {
         using var connection = _dbHelper.GetConnection();
         var result = await connection.QueryFirstOrDefaultAsync<bool?>(
-            @"SELECT IsActive FROM [core].[Companies]
-              WHERE CompanyId = @CompanyId AND DeletedAtUtc IS NULL",
-            new { CompanyId = companyId }
+            "[core].[sp_IsCompanyActive]",
+            new { CompanyId = companyId },
+            commandType: CommandType.StoredProcedure
         );
         return result ?? false;
     }
@@ -135,15 +133,10 @@ public class CompanyService
     public async Task<IEnumerable<Company>> GetAllCompaniesAsync(bool includeInactive = false)
     {
         using var connection = _dbHelper.GetConnection();
-
-        var query = includeInactive
-            ? @"SELECT * FROM [core].[Companies]
-                WHERE DeletedAtUtc IS NULL
-                ORDER BY CreatedAtUtc DESC"
-            : @"SELECT * FROM [core].[Companies]
-                WHERE IsActive = 1 AND DeletedAtUtc IS NULL
-                ORDER BY CreatedAtUtc DESC";
-
-        return await connection.QueryAsync<Company>(query);
+        return await connection.QueryAsync<Company>(
+            "[core].[sp_GetAllCompanies]",
+            new { IncludeInactive = includeInactive },
+            commandType: CommandType.StoredProcedure
+        );
     }
 }
