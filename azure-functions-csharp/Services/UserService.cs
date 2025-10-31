@@ -64,15 +64,15 @@ public class UserService
             // Hash default password
             var passwordHash = PasswordHelper.HashPassword(_defaultPassword);
 
-            // Insert user
-            var user = await connection.QuerySingleAsync<User>(
+            // Insert user (using SCOPE_IDENTITY to avoid trigger conflict)
+            var userId = await connection.ExecuteScalarAsync<long>(
                 @"INSERT INTO [auth].[Users] (
                     CompanyId, Email, DisplayName, PasswordHash, IsActive
                   )
-                  OUTPUT INSERTED.*
                   VALUES (
                     @CompanyId, @Email, @DisplayName, @PasswordHash, 1
-                  )",
+                  );
+                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
                 new
                 {
                     request.CompanyId,
@@ -80,6 +80,13 @@ public class UserService
                     request.DisplayName,
                     PasswordHash = passwordHash
                 },
+                transaction
+            );
+
+            // Retrieve the inserted user
+            var user = await connection.QuerySingleAsync<User>(
+                @"SELECT * FROM [auth].[Users] WHERE UserId = @UserId",
+                new { UserId = userId },
                 transaction
             );
 

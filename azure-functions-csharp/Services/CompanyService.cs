@@ -52,17 +52,17 @@ public class CompanyService
                 throw new InvalidOperationException("Company email already exists");
             }
 
-            // Insert company
-            var company = await connection.QuerySingleAsync<Company>(
+            // Insert company (using SCOPE_IDENTITY to avoid trigger conflict)
+            var companyId = await connection.ExecuteScalarAsync<long>(
                 @"INSERT INTO [core].[Companies] (
                     CompanyCode, Name, Email, Phone, Country, Address,
                     DefaultCurrency, MinimumBalance, IsActive
                   )
-                  OUTPUT INSERTED.*
                   VALUES (
                     @CompanyCode, @Name, @Email, @Phone, @Country, @Address,
                     @DefaultCurrency, @MinimumBalance, 1
-                  )",
+                  );
+                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
                 new
                 {
                     request.CompanyCode,
@@ -74,6 +74,13 @@ public class CompanyService
                     request.DefaultCurrency,
                     request.MinimumBalance
                 },
+                transaction
+            );
+
+            // Retrieve the inserted company
+            var company = await connection.QuerySingleAsync<Company>(
+                @"SELECT * FROM [core].[Companies] WHERE CompanyId = @CompanyId",
+                new { CompanyId = companyId },
                 transaction
             );
 
