@@ -6,6 +6,7 @@ using KamanAzureFunctions.DTOs;
 using KamanAzureFunctions.Helpers;
 using KamanAzureFunctions.Services;
 using Dapper;
+using System.Data;
 
 namespace KamanAzureFunctions.Functions;
 
@@ -56,12 +57,8 @@ public class BootstrapFunction
             await connection.OpenAsync();
 
             var existingSuperAdmins = await connection.QueryAsync<dynamic>(
-                @"SELECT u.UserId, u.Email
-                  FROM [auth].[Users] u
-                  JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
-                  JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
-                  WHERE r.Name = 'SUPER_ADMIN'
-                    AND u.DeletedAtUtc IS NULL"
+                "[auth].[sp_CheckSuperAdminExists]",
+                commandType: CommandType.StoredProcedure
             );
 
             if (existingSuperAdmins.Any())
@@ -76,8 +73,9 @@ public class BootstrapFunction
 
             // Ensure SUPER_ADMIN role exists
             var superAdminRole = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                @"SELECT RoleId, Name FROM [auth].[Roles]
-                  WHERE Name = 'SUPER_ADMIN'"
+                "[auth].[sp_CheckRoleExists]",
+                new { RoleName = "SUPER_ADMIN" },
+                commandType: CommandType.StoredProcedure
             );
 
             long superAdminRoleId;
@@ -85,11 +83,12 @@ public class BootstrapFunction
             {
                 _logger.LogInformation("Creating SUPER_ADMIN role");
 
-                superAdminRoleId = await connection.ExecuteScalarAsync<long>(
-                    @"INSERT INTO [auth].[Roles] (Name, Description)
-                      VALUES ('SUPER_ADMIN', 'Full system access');
-                      SELECT CAST(SCOPE_IDENTITY() AS BIGINT);"
+                var roleResult = await connection.QuerySingleAsync<dynamic>(
+                    "[auth].[sp_InsertRole]",
+                    new { Name = "SUPER_ADMIN", Description = "Full system access" },
+                    commandType: CommandType.StoredProcedure
                 );
+                superAdminRoleId = roleResult.RoleId;
             }
             else
             {
@@ -115,39 +114,26 @@ public class BootstrapFunction
             var passwordHash = PasswordHelper.HashPassword(password);
 
             // Insert the user
-            var userId = await connection.ExecuteScalarAsync<long>(
-                @"INSERT INTO [auth].[Users] (
-                    CompanyId,
-                    Email,
-                    DisplayName,
-                    PasswordHash,
-                    IsActive,
-                    IsLocked,
-                    FailedLoginAttempts
-                  )
-                  VALUES (
-                    NULL,  -- Super admin doesn't belong to any company
-                    @Email,
-                    @DisplayName,
-                    @PasswordHash,
-                    1,  -- IsActive
-                    0,  -- IsLocked
-                    0   -- FailedLoginAttempts
-                  );
-                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
+            var userResult = await connection.QuerySingleAsync<dynamic>(
+                "[auth].[sp_InsertUser]",
                 new
                 {
+                    CompanyId = (long?)null,  // Super admin doesn't belong to any company
                     Email = email,
                     DisplayName = displayName,
-                    PasswordHash = passwordHash
-                }
+                    PasswordHash = passwordHash,
+                    IsActive = true
+                },
+                commandType: CommandType.StoredProcedure
             );
+
+            long userId = userResult.UserId;
 
             // Assign SUPER_ADMIN role to the user
             await connection.ExecuteAsync(
-                @"INSERT INTO [auth].[UserRoles] (UserId, RoleId)
-                  VALUES (@UserId, @RoleId)",
-                new { UserId = userId, RoleId = superAdminRoleId }
+                "[auth].[sp_AssignRoleToUser]",
+                new { UserId = userId, RoleId = superAdminRoleId },
+                commandType: CommandType.StoredProcedure
             );
 
             _logger.LogInformation($"Super admin user created successfully: {email}");

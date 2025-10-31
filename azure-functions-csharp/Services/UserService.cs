@@ -2,6 +2,7 @@ using Dapper;
 using KamanAzureFunctions.DTOs;
 using KamanAzureFunctions.Helpers;
 using KamanAzureFunctions.Models;
+using System.Data;
 
 namespace KamanAzureFunctions.Services;
 
@@ -32,10 +33,10 @@ public class UserService
         {
             // Check if email already exists
             var existingUser = await connection.QueryFirstOrDefaultAsync<User>(
-                @"SELECT UserId FROM [auth].[Users]
-                  WHERE Email = @Email AND DeletedAtUtc IS NULL",
-                new { request.Email },
-                transaction
+                "[auth].[sp_CheckUserEmailExists]",
+                new { Email = request.Email },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             if (existingUser != null)
@@ -43,12 +44,12 @@ public class UserService
                 throw new InvalidOperationException("User with this email already exists");
             }
 
-            // Verify company exists
+            // Verify company exists and is active
             var company = await connection.QueryFirstOrDefaultAsync<Company>(
-                @"SELECT CompanyId, IsActive FROM [core].[Companies]
-                  WHERE CompanyId = @CompanyId AND DeletedAtUtc IS NULL",
-                new { request.CompanyId },
-                transaction
+                "[core].[sp_GetCompanyById]",
+                new { CompanyId = request.CompanyId },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             if (company == null)
@@ -64,49 +65,46 @@ public class UserService
             // Hash default password
             var passwordHash = PasswordHelper.HashPassword(_defaultPassword);
 
-            // Insert user (using SCOPE_IDENTITY to avoid trigger conflict)
-            var userId = await connection.ExecuteScalarAsync<long>(
-                @"INSERT INTO [auth].[Users] (
-                    CompanyId, Email, DisplayName, PasswordHash, IsActive
-                  )
-                  VALUES (
-                    @CompanyId, @Email, @DisplayName, @PasswordHash, 1
-                  );
-                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
+            // Insert user
+            var userIdResult = await connection.QuerySingleAsync<dynamic>(
+                "[auth].[sp_InsertUser]",
                 new
                 {
-                    request.CompanyId,
-                    request.Email,
-                    request.DisplayName,
-                    PasswordHash = passwordHash
+                    CompanyId = request.CompanyId,
+                    Email = request.Email,
+                    DisplayName = request.DisplayName,
+                    PasswordHash = passwordHash,
+                    IsActive = true
                 },
-                transaction
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
+
+            long userId = userIdResult.UserId;
 
             // Retrieve the inserted user
             var user = await connection.QuerySingleAsync<User>(
-                @"SELECT * FROM [auth].[Users] WHERE UserId = @UserId",
+                "[auth].[sp_GetUserById]",
                 new { UserId = userId },
-                transaction
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             // Assign role (default to COMPANY_ADMIN if not specified)
             var roleId = request.RoleId ?? 2; // 2 = COMPANY_ADMIN
             await connection.ExecuteAsync(
-                @"INSERT INTO [auth].[UserRoles] (UserId, RoleId)
-                  VALUES (@UserId, @RoleId)",
-                new { UserId = user.UserId, RoleId = roleId },
-                transaction
+                "[auth].[sp_AssignRoleToUser]",
+                new { UserId = userId, RoleId = roleId },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             // Get user roles
             var roles = await connection.QueryAsync<string>(
-                @"SELECT r.Name
-                  FROM [auth].[UserRoles] ur
-                  JOIN [auth].[Roles] r ON r.RoleId = ur.RoleId
-                  WHERE ur.UserId = @UserId",
-                new { UserId = user.UserId },
-                transaction
+                "[auth].[sp_GetUserRoles]",
+                new { UserId = userId },
+                transaction,
+                commandType: CommandType.StoredProcedure
             );
 
             transaction.Commit();
@@ -138,43 +136,25 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
 
-        // Get user with roles
-        var userResult = await connection.QueryAsync<dynamic>(
-            @"SELECT u.*, r.Name as RoleName
-              FROM [auth].[Users] u
-              LEFT JOIN [auth].[UserRoles] ur ON ur.UserId = u.UserId
-              LEFT JOIN [auth].[Roles] r ON r.RoleId = ur.RoleId
-              WHERE u.Email = @Email AND u.DeletedAtUtc IS NULL",
-            new { Email = email }
+        // Get user for login
+        var user = await connection.QueryFirstOrDefaultAsync<User>(
+            "[auth].[sp_GetUserByEmailForLogin]",
+            new { Email = email },
+            commandType: CommandType.StoredProcedure
         );
 
-        var userList = userResult.ToList();
-
-        if (!userList.Any())
+        if (user == null)
         {
             await LogLoginAttemptAsync(email, null, false, "User not found", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Invalid email or password");
         }
 
-        var userRecord = userList.First();
-        var user = new User
-        {
-            UserId = userRecord.UserId,
-            CompanyId = userRecord.CompanyId,
-            Email = userRecord.Email,
-            DisplayName = userRecord.DisplayName,
-            PasswordHash = userRecord.PasswordHash,
-            PasswordSalt = userRecord.PasswordSalt,
-            IsActive = userRecord.IsActive,
-            IsLocked = userRecord.IsLocked,
-            FailedLoginAttempts = userRecord.FailedLoginAttempts,
-            LastFailedLoginUtc = userRecord.LastFailedLoginUtc,
-            CreatedAtUtc = userRecord.CreatedAtUtc,
-            LastLoginUtc = userRecord.LastLoginUtc,
-            DeletedAtUtc = userRecord.DeletedAtUtc
-        };
-
-        var roles = userList.Where(r => r.RoleName != null).Select(r => (string)r.RoleName).ToList();
+        // Get user roles
+        var roles = (await connection.QueryAsync<string>(
+            "[auth].[sp_GetUserRoles]",
+            new { UserId = user.UserId },
+            commandType: CommandType.StoredProcedure
+        )).ToList();
 
         // Check if user is active
         if (!user.IsActive)
@@ -200,15 +180,11 @@ public class UserService
             throw new UnauthorizedAccessException("Invalid email or password");
         }
 
-        // Reset failed login attempts
-        await ResetFailedLoginAttemptsAsync(user.UserId);
-
-        // Update last login
+        // Update last login and reset failed attempts
         await connection.ExecuteAsync(
-            @"UPDATE [auth].[Users]
-              SET LastLoginUtc = SYSUTCDATETIME()
-              WHERE UserId = @UserId",
-            new { UserId = user.UserId }
+            "[auth].[sp_UpdateLastLogin]",
+            new { UserId = user.UserId, IpAddress = ipAddress, UserAgent = userAgent },
+            commandType: CommandType.StoredProcedure
         );
 
         // Log successful login
@@ -235,11 +211,11 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
 
-        // Get user
+        // Get user to validate
         var user = await connection.QueryFirstOrDefaultAsync<User>(
-            @"SELECT UserId, IsActive FROM [auth].[Users]
-              WHERE UserId = @UserId AND DeletedAtUtc IS NULL",
-            new { UserId = userId }
+            "[auth].[sp_GetUserById]",
+            new { UserId = userId },
+            commandType: CommandType.StoredProcedure
         );
 
         if (user == null)
@@ -255,15 +231,11 @@ public class UserService
         // Hash new password
         var passwordHash = PasswordHelper.HashPassword(newPassword);
 
-        // Update password and reset failed attempts if locked
+        // Update password and unlock/reset failed attempts
         await connection.ExecuteAsync(
-            @"UPDATE [auth].[Users]
-              SET PasswordHash = @PasswordHash,
-                  FailedLoginAttempts = 0,
-                  IsLocked = 0,
-                  LastFailedLoginUtc = NULL
-              WHERE UserId = @UserId",
-            new { UserId = userId, PasswordHash = passwordHash }
+            "[auth].[sp_ResetPasswordAndUnlock]",
+            new { UserId = userId, PasswordHash = passwordHash },
+            commandType: CommandType.StoredProcedure
         );
     }
 
@@ -274,9 +246,9 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
         return await connection.QueryFirstOrDefaultAsync<User>(
-            @"SELECT * FROM [auth].[Users]
-              WHERE UserId = @UserId AND DeletedAtUtc IS NULL",
-            new { UserId = userId }
+            "[auth].[sp_GetUserById]",
+            new { UserId = userId },
+            commandType: CommandType.StoredProcedure
         );
     }
 
@@ -287,41 +259,20 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
 
-        var userResult = await connection.QueryAsync<dynamic>(
-            @"SELECT u.*, r.Name as RoleName
-              FROM [auth].[Users] u
-              LEFT JOIN [auth].[UserRoles] ur ON ur.UserId = u.UserId
-              LEFT JOIN [auth].[Roles] r ON r.RoleId = ur.RoleId
-              WHERE u.UserId = @UserId AND u.DeletedAtUtc IS NULL",
-            new { UserId = userId }
+        // Call stored procedure that returns multiple result sets
+        using var multi = await connection.QueryMultipleAsync(
+            "[auth].[sp_GetUserWithRoles]",
+            new { UserId = userId },
+            commandType: CommandType.StoredProcedure
         );
 
-        var userList = userResult.ToList();
-
-        if (!userList.Any())
+        var user = await multi.ReadSingleOrDefaultAsync<User>();
+        if (user == null)
         {
             throw new InvalidOperationException("User not found");
         }
 
-        var userRecord = userList.First();
-        var user = new User
-        {
-            UserId = userRecord.UserId,
-            CompanyId = userRecord.CompanyId,
-            Email = userRecord.Email,
-            DisplayName = userRecord.DisplayName,
-            PasswordHash = userRecord.PasswordHash,
-            PasswordSalt = userRecord.PasswordSalt,
-            IsActive = userRecord.IsActive,
-            IsLocked = userRecord.IsLocked,
-            FailedLoginAttempts = userRecord.FailedLoginAttempts,
-            LastFailedLoginUtc = userRecord.LastFailedLoginUtc,
-            CreatedAtUtc = userRecord.CreatedAtUtc,
-            LastLoginUtc = userRecord.LastLoginUtc,
-            DeletedAtUtc = userRecord.DeletedAtUtc
-        };
-
-        var roles = userList.Where(r => r.RoleName != null).Select(r => (string)r.RoleName).ToList();
+        var roles = (await multi.ReadAsync<string>()).ToList();
 
         return (user, roles);
     }
@@ -333,12 +284,9 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
         await connection.ExecuteAsync(
-            @"UPDATE [auth].[Users]
-              SET FailedLoginAttempts = FailedLoginAttempts + 1,
-                  LastFailedLoginUtc = SYSUTCDATETIME(),
-                  IsLocked = CASE WHEN FailedLoginAttempts >= 4 THEN 1 ELSE 0 END
-              WHERE UserId = @UserId",
-            new { UserId = userId }
+            "[auth].[sp_TrackFailedLogin]",
+            new { UserId = userId, IpAddress = (string?)null, UserAgent = (string?)null },
+            commandType: CommandType.StoredProcedure
         );
     }
 
@@ -349,12 +297,9 @@ public class UserService
     {
         using var connection = _dbHelper.GetConnection();
         await connection.ExecuteAsync(
-            @"UPDATE [auth].[Users]
-              SET FailedLoginAttempts = 0,
-                  LastFailedLoginUtc = NULL,
-                  IsLocked = 0
-              WHERE UserId = @UserId",
-            new { UserId = userId }
+            "[auth].[sp_UpdateLastLogin]",
+            new { UserId = userId, IpAddress = (string?)null, UserAgent = (string?)null },
+            commandType: CommandType.StoredProcedure
         );
     }
 
@@ -369,20 +314,29 @@ public class UserService
         string? ipAddress,
         string? userAgent)
     {
+        // Keep inline SQL for logging (optional table, not critical)
         using var connection = _dbHelper.GetConnection();
-        await connection.ExecuteAsync(
-            @"INSERT INTO [auth].[LoginAttempts]
-              (Email, UserId, IpAddress, UserAgent, Success, FailureReason)
-              VALUES (@Email, @UserId, @IpAddress, @UserAgent, @Success, @FailureReason)",
-            new
-            {
-                Email = email,
-                UserId = userId,
-                IpAddress = ipAddress,
-                UserAgent = userAgent,
-                Success = success,
-                FailureReason = failureReason
-            }
-        );
+
+        try
+        {
+            await connection.ExecuteAsync(
+                @"INSERT INTO [auth].[LoginAttempts]
+                  (Email, UserId, IpAddress, UserAgent, Success, FailureReason)
+                  VALUES (@Email, @UserId, @IpAddress, @UserAgent, @Success, @FailureReason)",
+                new
+                {
+                    Email = email,
+                    UserId = userId,
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    Success = success,
+                    FailureReason = failureReason
+                }
+            );
+        }
+        catch
+        {
+            // Ignore logging errors - don't fail the operation
+        }
     }
 }
