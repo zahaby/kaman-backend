@@ -98,7 +98,7 @@ Use this endpoint for **emergency password reset** when:
 - You need to recover access to a super admin account
 
 ### Endpoint
-**POST** `http://localhost:7071/api/admin/reset-superadmin-password`
+**POST** `http://localhost:7071/api/auth/reset-superadmin-password`
 
 ### Request Body
 ```json
@@ -324,7 +324,7 @@ For critical operations, implement a two-person rule:
 ### Test Password Reset
 
 1. **Reset a Super Admin Password**
-   - URL: `http://localhost:7071/api/admin/reset-superadmin-password`
+   - URL: `http://localhost:7071/api/auth/reset-superadmin-password`
    - Method: POST
    - Body:
      ```json

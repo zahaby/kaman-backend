@@ -281,7 +281,7 @@ The API will be available at `http://localhost:7071/api`
 **Security Note**: This endpoint can only be used once (before any super admin exists). See [BOOTSTRAP_GUIDE.md](BOOTSTRAP_GUIDE.md) for details.
 
 ### 7. Reset Super Admin Password
-**Endpoint**: `POST /api/admin/reset-superadmin-password`
+**Endpoint**: `POST /api/auth/reset-superadmin-password`
 
 **Authorization**: None (requires reset secret)
 
