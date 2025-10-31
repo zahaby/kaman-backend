@@ -369,6 +369,44 @@ GET /api/company/list?includeInactive=true
 
 **Security Note**: Keep the reset secret secure. See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete security guidelines.
 
+### 9. List Gift Categories
+**Endpoint**: `GET /api/gifts/categories`
+
+**Authorization**: Bearer token (any authenticated user)
+
+**When to Use**: Retrieve gift categories from Resal API for display in the Flutter app
+
+**Request**: No body required
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "name_en": "creative-gifts",
+    "name_ar": "هدايا إبداعية"
+  },
+  {
+    "id": 2,
+    "name_en": "flowers",
+    "name_ar": "باقات ورد"
+  },
+  {
+    "id": 3,
+    "name_en": "chocolate",
+    "name_ar": "الشوكولاتة"
+  }
+]
+```
+
+**What it does**:
+- Acts as a wrapper for the Resal API
+- Calls `https://glee-sandbox.resal.me/api/v1/gifts/categories` with authentication
+- Returns the exact response from Resal API
+- Provides authenticated access to gift categories for the Flutter app
+
+**Note**: This endpoint requires authentication but is accessible to all authenticated users (not restricted to super admin).
+
 ## Authentication
 
 All protected endpoints require a JWT access token in the Authorization header:
@@ -484,6 +522,8 @@ Configure GitHub Actions or Azure DevOps for automated deployment.
 | `JwtRefreshExpiresInDays` | Refresh token expiration in days | 7 |
 | `DefaultPassword` | Default password for new users | Kaman@2025 |
 | `Environment` | Environment name | Development |
+| `ResalApiBaseUrl` | Resal API base URL | https://glee-sandbox.resal.me/api/v1 |
+| `ResalApiBearerToken` | Resal API authentication token | - |
 
 ## NuGet Packages
 
