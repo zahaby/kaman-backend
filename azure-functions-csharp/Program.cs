@@ -33,12 +33,27 @@ var host = new HostBuilder()
         // Get default password
         var defaultPassword = configuration["DefaultPassword"] ?? "Kaman@2025";
 
+        // Get Resal API configuration
+        var resalApiBaseUrl = configuration["ResalApiBaseUrl"]
+            ?? throw new InvalidOperationException("Resal API base URL is not configured");
+        var resalApiBearerToken = configuration["ResalApiBearerToken"]
+            ?? throw new InvalidOperationException("Resal API bearer token is not configured");
+
+        // Register HttpClient for ResalService
+        services.AddHttpClient();
+
         // Register Services
         services.AddScoped<CompanyService>();
         services.AddScoped(sp => new UserService(
             sp.GetRequiredService<DatabaseHelper>(),
             sp.GetRequiredService<JwtHelper>(),
             defaultPassword
+        ));
+        services.AddScoped(sp => new ResalService(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+            sp.GetRequiredService<ILogger<ResalService>>(),
+            resalApiBaseUrl,
+            resalApiBearerToken
         ));
     })
     .Build();
