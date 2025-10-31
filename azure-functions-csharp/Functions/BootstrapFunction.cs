@@ -87,8 +87,8 @@ public class BootstrapFunction
 
                 superAdminRoleId = await connection.ExecuteScalarAsync<long>(
                     @"INSERT INTO [auth].[Roles] (Name, Description)
-                      OUTPUT INSERTED.RoleId
-                      VALUES ('SUPER_ADMIN', 'Full system access')"
+                      VALUES ('SUPER_ADMIN', 'Full system access');
+                      SELECT CAST(SCOPE_IDENTITY() AS BIGINT);"
                 );
             }
             else
@@ -125,7 +125,6 @@ public class BootstrapFunction
                     IsLocked,
                     FailedLoginAttempts
                   )
-                  OUTPUT INSERTED.UserId
                   VALUES (
                     NULL,  -- Super admin doesn't belong to any company
                     @Email,
@@ -134,7 +133,8 @@ public class BootstrapFunction
                     1,  -- IsActive
                     0,  -- IsLocked
                     0   -- FailedLoginAttempts
-                  )",
+                  );
+                  SELECT CAST(SCOPE_IDENTITY() AS BIGINT);",
                 new
                 {
                     Email = email,
