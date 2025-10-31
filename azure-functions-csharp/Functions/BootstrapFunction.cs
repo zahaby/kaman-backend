@@ -60,9 +60,8 @@ public class BootstrapFunction
                   FROM [auth].[Users] u
                   JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
                   JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
-                  WHERE r.RoleCode = 'SUPER_ADMIN'
-                    AND u.DeletedAtUtc IS NULL
-                    AND r.DeletedAtUtc IS NULL"
+                  WHERE r.Name = 'SUPER_ADMIN'
+                    AND u.DeletedAtUtc IS NULL"
             );
 
             if (existingSuperAdmins.Any())
@@ -77,8 +76,8 @@ public class BootstrapFunction
 
             // Ensure SUPER_ADMIN role exists
             var superAdminRole = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                @"SELECT RoleId, RoleCode FROM [auth].[Roles]
-                  WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL"
+                @"SELECT RoleId, Name FROM [auth].[Roles]
+                  WHERE Name = 'SUPER_ADMIN'"
             );
 
             long superAdminRoleId;
@@ -87,9 +86,9 @@ public class BootstrapFunction
                 _logger.LogInformation("Creating SUPER_ADMIN role");
 
                 superAdminRoleId = await connection.ExecuteScalarAsync<long>(
-                    @"INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive)
+                    @"INSERT INTO [auth].[Roles] (Name, Description)
                       OUTPUT INSERTED.RoleId
-                      VALUES ('SUPER_ADMIN', 'Super Administrator', 'Full system access', 1)"
+                      VALUES ('SUPER_ADMIN', 'Full system access')"
                 );
             }
             else

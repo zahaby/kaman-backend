@@ -79,9 +79,8 @@ public class ResetSuperAdminPasswordFunction
                   JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
                   JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
                   WHERE u.Email = @Email
-                    AND r.RoleCode = 'SUPER_ADMIN'
-                    AND u.DeletedAtUtc IS NULL
-                    AND r.DeletedAtUtc IS NULL",
+                    AND r.Name = 'SUPER_ADMIN'
+                    AND u.DeletedAtUtc IS NULL",
                 new { Email = request.Email }
             );
 
