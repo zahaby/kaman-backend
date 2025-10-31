@@ -104,7 +104,60 @@ The API will be available at `http://localhost:7071/api`
 }
 ```
 
-### 2. Create Company User
+### 2. List All Companies
+**Endpoint**: `GET /api/company/list`
+
+**Authorization**: Bearer token (Super Admin only)
+
+**Query Parameters** (optional):
+- `includeInactive` (boolean): Set to `true` to include inactive companies. Default is `false`.
+
+**Example Request**:
+```
+GET /api/company/list
+GET /api/company/list?includeInactive=true
+```
+
+**Response**:
+```json
+{
+  "Success": true,
+  "Message": "Retrieved 5 companies successfully",
+  "Data": {
+    "TotalCount": 5,
+    "Companies": [
+      {
+        "CompanyId": 1,
+        "CompanyCode": "ACME001",
+        "Name": "Acme Corporation",
+        "Email": "admin@acme.com",
+        "Phone": "+201234567890",
+        "Country": "Egypt",
+        "Address": "123 Business Street, Cairo",
+        "DefaultCurrency": "EGP",
+        "MinimumBalance": 0,
+        "IsActive": true,
+        "CreatedAt": "2025-10-27T10:00:00.000Z"
+      },
+      {
+        "CompanyId": 2,
+        "CompanyCode": "TEST001",
+        "Name": "Test Company",
+        "Email": "test@company.com",
+        "Phone": "+201234567891",
+        "Country": "Egypt",
+        "Address": "456 Test Street",
+        "DefaultCurrency": "EGP",
+        "MinimumBalance": 100,
+        "IsActive": true,
+        "CreatedAt": "2025-10-28T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### 3. Create Company User
 **Endpoint**: `POST /api/user/create`
 
 **Authorization**: Bearer token (Super Admin or Company Admin)
@@ -148,7 +201,7 @@ The API will be available at `http://localhost:7071/api`
 }
 ```
 
-### 3. Login
+### 4. Login
 **Endpoint**: `POST /api/auth/login`
 
 **Authorization**: None (public endpoint)
@@ -185,7 +238,7 @@ The API will be available at `http://localhost:7071/api`
 }
 ```
 
-### 4. Set Password
+### 5. Set Password
 **Endpoint**: `POST /api/user/set-password`
 
 **Authorization**: Bearer token
@@ -218,7 +271,7 @@ The API will be available at `http://localhost:7071/api`
 }
 ```
 
-### 5. Refresh Token
+### 6. Refresh Token
 **Endpoint**: `POST /api/auth/refresh`
 
 **Authorization**: None (uses refresh token)
@@ -248,7 +301,7 @@ The API will be available at `http://localhost:7071/api`
 
 ## Admin Endpoints
 
-### 6. Bootstrap (Create First Super Admin)
+### 7. Bootstrap (Create First Super Admin)
 **Endpoint**: `POST /api/bootstrap/super-admin`
 
 **Authorization**: None (requires bootstrap secret)
@@ -280,7 +333,7 @@ The API will be available at `http://localhost:7071/api`
 
 **Security Note**: This endpoint can only be used once (before any super admin exists). See [BOOTSTRAP_GUIDE.md](BOOTSTRAP_GUIDE.md) for details.
 
-### 7. Reset Super Admin Password
+### 8. Reset Super Admin Password
 **Endpoint**: `POST /api/auth/reset-superadmin-password`
 
 **Authorization**: None (requires reset secret)

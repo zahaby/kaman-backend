@@ -128,4 +128,22 @@ public class CompanyService
         );
         return result ?? false;
     }
+
+    /// <summary>
+    /// Get all companies (for super admin)
+    /// </summary>
+    public async Task<IEnumerable<Company>> GetAllCompaniesAsync(bool includeInactive = false)
+    {
+        using var connection = _dbHelper.GetConnection();
+
+        var query = includeInactive
+            ? @"SELECT * FROM [core].[Companies]
+                WHERE DeletedAtUtc IS NULL
+                ORDER BY CreatedAtUtc DESC"
+            : @"SELECT * FROM [core].[Companies]
+                WHERE IsActive = 1 AND DeletedAtUtc IS NULL
+                ORDER BY CreatedAtUtc DESC";
+
+        return await connection.QueryAsync<Company>(query);
+    }
 }
