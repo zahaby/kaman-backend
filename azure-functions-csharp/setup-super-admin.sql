@@ -12,7 +12,7 @@ SELECT
     u.CompanyId,
     u.IsActive,
     u.IsLocked,
-    STRING_AGG(r.RoleCode, ', ') as Roles
+    STRING_AGG(r.Name, ', ') as Roles
 FROM [auth].[Users] u
 LEFT JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
 LEFT JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
@@ -20,9 +20,8 @@ WHERE u.DeletedAtUtc IS NULL
 GROUP BY u.UserId, u.Email, u.DisplayName, u.CompanyId, u.IsActive, u.IsLocked;
 
 -- 2. Check what roles exist in the system
-SELECT RoleId, RoleCode, RoleName, Description
-FROM [auth].[Roles]
-WHERE DeletedAtUtc IS NULL;
+SELECT RoleId, Name, Description
+FROM [auth].[Roles];
 
 -- ============================================
 -- 3. CREATE SUPER ADMIN USER
@@ -77,7 +76,7 @@ BEGIN
     -- Get the SUPER_ADMIN role ID
     SELECT @SuperAdminRoleId = RoleId
     FROM [auth].[Roles]
-    WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL;
+    WHERE Name = 'SUPER_ADMIN';
 
     IF @SuperAdminRoleId IS NOT NULL
     BEGIN
@@ -91,7 +90,7 @@ BEGIN
     BEGIN
         PRINT 'ERROR: SUPER_ADMIN role not found in the database!';
         PRINT 'You may need to insert the role first:';
-        PRINT 'INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive) VALUES (''SUPER_ADMIN'', ''Super Administrator'', ''Full system access'', 1);';
+        PRINT 'INSERT INTO [auth].[Roles] (Name, Description) VALUES (''SUPER_ADMIN'', ''Full system access'');';
     END
 END
 ELSE
@@ -102,12 +101,12 @@ END
 -- ============================================
 -- 4. ALTERNATIVE: Create SUPER_ADMIN role if it doesn't exist
 -- ============================================
-IF NOT EXISTS (SELECT 1 FROM [auth].[Roles] WHERE RoleCode = 'SUPER_ADMIN' AND DeletedAtUtc IS NULL)
+IF NOT EXISTS (SELECT 1 FROM [auth].[Roles] WHERE Name = 'SUPER_ADMIN')
 BEGIN
     PRINT 'Creating SUPER_ADMIN role...';
 
-    INSERT INTO [auth].[Roles] (RoleCode, RoleName, Description, IsActive)
-    VALUES ('SUPER_ADMIN', 'Super Administrator', 'Full system access', 1);
+    INSERT INTO [auth].[Roles] (Name, Description)
+    VALUES ('SUPER_ADMIN', 'Full system access');
 
     PRINT 'SUPER_ADMIN role created successfully';
 END
@@ -133,8 +132,8 @@ WHERE u.Email = 'superadmin@kaman.com' AND u.DeletedAtUtc IS NULL;
 -- Check the user's roles
 SELECT
     u.Email,
-    r.RoleCode,
-    r.RoleName
+    r.Name as RoleName,
+    r.Description
 FROM [auth].[Users] u
 JOIN [auth].[UserRoles] ur ON u.UserId = ur.UserId
 JOIN [auth].[Roles] r ON ur.RoleId = r.RoleId
