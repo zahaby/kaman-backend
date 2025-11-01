@@ -33,7 +33,7 @@ public class ResalService
         {
             _logger.LogInformation("Calling Resal API to get gift categories");
 
-            var response = await _httpClient.GetAsync("/gifts/categories");
+            var response = await _httpClient.GetAsync("gifts/categories");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -85,7 +85,7 @@ public class ResalService
             }
 
             var queryString = string.Join("&", queryParams);
-            var url = $"/gifts?{queryString}";
+            var url = $"gifts?{queryString}";
 
             _logger.LogInformation($"Calling Resal API URL: {url}");
 
