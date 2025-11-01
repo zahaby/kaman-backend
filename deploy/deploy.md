@@ -186,7 +186,7 @@ az functionapp create \
 Build the connection string:
 
 ```bash
-DB_CONNECTION_STRING="Server=$SQL_SERVER;Database=$SQL_DATABASE;User Id=$SQL_USER;Password=$SQL_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+DB_CONNECTION_STRING="Server=$SQL_SERVER;Database=$SQL_DATABASE;User Id=$SQL_USER;Password=$SQL_PASSWORD;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
 ```
 
 Set all application settings:

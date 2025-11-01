@@ -273,7 +273,7 @@ deploy() {
     # Step 5: Configure App Settings
     print_info "Step 5/8: Configuring Application Settings"
 
-    DB_CONNECTION_STRING="Server=$SQL_SERVER;Database=$SQL_DATABASE;User Id=$SQL_USER;Password=$SQL_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    DB_CONNECTION_STRING="Server=$SQL_SERVER;Database=$SQL_DATABASE;User Id=$SQL_USER;Password=$SQL_PASSWORD;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
 
     az functionapp config appsettings set \
         --name "$FUNCTION_APP" \
