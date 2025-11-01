@@ -60,12 +60,13 @@ public class ResalService
 
     /// <summary>
     /// Get gifts from Resal API with pagination and filters
+    /// Returns the raw JSON response from Resal API without any transformation
     /// </summary>
     /// <param name="page">Page number (1-based)</param>
     /// <param name="perPage">Number of items per page</param>
     /// <param name="countries">Country ID filter (optional)</param>
     /// <param name="all">Include all items (optional)</param>
-    public async Task<GiftsResponseDto> GetGiftsAsync(int page = 1, int perPage = 10, int? countries = null, bool all = false)
+    public async Task<string> GetGiftsAsync(int page = 1, int perPage = 10, int? countries = null, bool all = false)
     {
         try
         {
@@ -105,12 +106,8 @@ public class ResalService
             var content = await response.Content.ReadAsStringAsync();
             _logger.LogInformation($"Resal API gifts response received (length: {content.Length})");
 
-            var giftsResponse = JsonSerializer.Deserialize<GiftsResponseDto>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return giftsResponse ?? new GiftsResponseDto();
+            // Return raw JSON response without any deserialization/transformation
+            return content;
         }
         catch (Exception ex)
         {

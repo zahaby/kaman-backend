@@ -73,14 +73,15 @@ public class ListGiftsFunction
 
             _logger.LogInformation($"Fetching gifts - Page: {page}, PerPage: {perPage}, Countries: {countries}, All: {all}");
 
-            // Call Resal API to get gifts
-            var giftsResponse = await _resalService.GetGiftsAsync(page, perPage, countries, all);
+            // Call Resal API to get gifts (returns raw JSON)
+            var giftsJson = await _resalService.GetGiftsAsync(page, perPage, countries, all);
 
-            _logger.LogInformation($"Retrieved {giftsResponse.Data?.Count ?? 0} gifts from Resal API");
+            _logger.LogInformation($"Retrieved gifts response from Resal API");
 
-            // Return the exact response from Resal API
+            // Return the exact raw JSON response from Resal API
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(giftsResponse);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+            await response.WriteStringAsync(giftsJson);
 
             return response;
         }
