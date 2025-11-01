@@ -407,6 +407,62 @@ GET /api/company/list?includeInactive=true
 
 **Note**: This endpoint requires authentication but is accessible to all authenticated users (not restricted to super admin).
 
+### 10. List Gifts
+**Endpoint**: `GET /api/gifts`
+
+**Authorization**: Bearer token (any authenticated user)
+
+**When to Use**: Retrieve paginated list of gifts from Resal API for display in the Flutter app
+
+**Query Parameters**:
+- `page` (optional): Page number, defaults to 1
+- `per_page` (optional): Number of items per page (max 100), defaults to 10
+- `countries` (optional): Country ID filter (e.g., 1 for a specific country)
+- `all` (optional): Include all items, defaults to false
+
+**Example Request**:
+```bash
+GET /api/gifts?page=1&per_page=10&countries=1&all=false
+```
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": 123,
+      "name_en": "Gift Card 100",
+      "name_ar": "بطاقة هدية 100",
+      "description_en": "Gift card worth 100",
+      "description_ar": "بطاقة هدية بقيمة 100",
+      "price": 100.00,
+      "currency": "SAR",
+      "image": "https://example.com/image.jpg",
+      "category_id": 1,
+      "category_name_en": "creative-gifts",
+      "category_name_ar": "هدايا إبداعية",
+      "country_id": 1,
+      "is_active": true
+    }
+  ],
+  "current_page": 1,
+  "per_page": 10,
+  "total": 150,
+  "last_page": 15,
+  "from": 1,
+  "to": 10
+}
+```
+
+**What it does**:
+- Acts as a wrapper for the Resal API gifts endpoint
+- Calls `https://glee-sandbox.resal.me/api/v1/gifts` with specified parameters
+- Returns paginated list of gifts with metadata
+- Supports filtering by country and pagination
+- Provides authenticated access to gift listings for the Flutter app
+
+**Note**: This endpoint requires authentication but is accessible to all authenticated users (not restricted to super admin).
+
 ## Authentication
 
 All protected endpoints require a JWT access token in the Authorization header:
