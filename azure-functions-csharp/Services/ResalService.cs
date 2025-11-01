@@ -85,7 +85,7 @@ public class ResalService
             }
 
             var queryString = string.Join("&", queryParams);
-            var url = $"gifts?{queryString}";
+            var url = $"gifts/?{queryString}";
 
             _logger.LogInformation($"Calling Resal API URL: {url}");
             _logger.LogInformation($"Full URL: {_httpClient.BaseAddress}{url}");
