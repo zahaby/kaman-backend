@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,8 +41,16 @@ var host = new HostBuilder()
         var resalApiBearerToken = configuration["ResalApiBearerToken"]
             ?? throw new InvalidOperationException("Resal API bearer token is not configured");
 
-        // Register HttpClient for ResalService
-        services.AddHttpClient();
+        // Register HttpClient for ResalService with proper configuration
+        services.AddHttpClient("ResalClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = true,
+            MaxAutomaticRedirections = 5
+        });
 
         // Register Services
         services.AddScoped<CompanyService>();
@@ -51,7 +60,7 @@ var host = new HostBuilder()
             defaultPassword
         ));
         services.AddScoped(sp => new ResalService(
-            sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("ResalClient"),
             sp.GetRequiredService<ILogger<ResalService>>(),
             resalApiBaseUrl,
             resalApiBearerToken

@@ -88,12 +88,17 @@ public class ResalService
             var url = $"gifts?{queryString}";
 
             _logger.LogInformation($"Calling Resal API URL: {url}");
+            _logger.LogInformation($"Full URL: {_httpClient.BaseAddress}{url}");
 
             var response = await _httpClient.GetAsync(url);
 
+            _logger.LogInformation($"Resal API response status: {response.StatusCode}");
+            _logger.LogInformation($"Response headers: {string.Join(", ", response.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}"))}");
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Resal API returned error status: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Resal API returned error status: {response.StatusCode}, Content: {errorContent}");
                 throw new HttpRequestException($"Resal API error: {response.StatusCode}");
             }
 
