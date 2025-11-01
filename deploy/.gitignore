@@ -1,0 +1,15 @@
+# Ignore customized deployment scripts
+my-deploy.sh
+*-deploy.sh
+
+# Ignore any environment-specific files
+*.env
+.env.*
+
+# Ignore backup files
+*.bak
+*.backup
+
+# Keep the template files
+!deploy.sh
+!deploy.md
