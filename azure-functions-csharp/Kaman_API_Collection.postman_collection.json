@@ -7,6 +7,60 @@
   },
   "item": [
     {
+      "name": "Bootstrap",
+      "item": [
+        {
+          "name": "Bootstrap Super Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse response",
+                  "const response = pm.response.json();",
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success flag\", function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Super admin account created or already exists\", function () {",
+                  "    pm.expect(response.data).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"YourSuperAdminPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bootstrap/super-admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["bootstrap", "super-admin"]
+            },
+            "description": "Bootstrap the system by creating the Super Admin account. This endpoint is only accessible when no Super Admin exists. No authentication required."
+          },
+          "response": []
+        }
+      ],
+      "description": "Bootstrap endpoints for initial system setup"
+    },
+    {
       "name": "Authentication",
       "item": [
         {
@@ -118,6 +172,54 @@
             "description": "Refresh an expired access token using a valid refresh token."
           },
           "response": []
+        },
+        {
+          "name": "Reset Super Admin Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse response",
+                  "const response = pm.response.json();",
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success flag\", function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Password was reset\", function () {",
+                  "    pm.expect(response.data).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewSuperAdminPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-superadmin-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-superadmin-password"]
+            },
+            "description": "Reset the Super Admin password. This is a special endpoint that allows resetting the Super Admin password without authentication for recovery purposes."
+          },
+          "response": []
         }
       ],
       "description": "Authentication endpoints for login and token refresh"
@@ -190,6 +292,56 @@
               "path": ["company", "create"]
             },
             "description": "Create a new company with automatic wallet setup. Requires Super Admin authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "List Companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse response",
+                  "const response = pm.response.json();",
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success flag\", function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains companies array\", function () {",
+                  "    pm.expect(response.data).to.have.property('companies');",
+                  "    pm.expect(response.data.companies).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/company/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["company", "list"]
+            },
+            "description": "List all companies in the system. Requires Super Admin authentication."
           },
           "response": []
         }
@@ -333,59 +485,34 @@
       "description": "User management endpoints"
     },
     {
-      "name": "Test Workflows",
+      "name": "Gifts & Categories",
       "item": [
         {
-          "name": "1. Login as Super Admin",
+          "name": "List Gift Categories",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
+                  "// Parse response",
                   "const response = pm.response.json();",
-                  "pm.test(\"Login successful\", () => pm.response.to.have.status(200));",
-                  "if (response.success && response.data.authentication) {",
-                  "    pm.environment.set(\"accessToken\", response.data.authentication.accessToken);",
-                  "    pm.environment.set(\"refreshToken\", response.data.authentication.refreshToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"superadmin@kaman.local\",\n  \"password\": \"YourSuperAdminPassword123!\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Step 1: Login as Super Admin"
-          },
-          "response": []
-        },
-        {
-          "name": "2. Create New Company",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Company created\", () => pm.response.to.have.status(201));",
-                  "if (response.success && response.data.company) {",
-                  "    pm.environment.set(\"companyId\", response.data.company.companyId);",
-                  "}"
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Categories have required fields\", function () {",
+                  "    if (response.length > 0) {",
+                  "        pm.expect(response[0]).to.have.property('id');",
+                  "        pm.expect(response[0]).to.have.property('name_en');",
+                  "        pm.expect(response[0]).to.have.property('name_ar');",
+                  "    }",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -402,40 +529,55 @@
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"companyCode\": \"TESTCO{{$timestamp}}\",\n  \"name\": \"Test Company {{$timestamp}}\",\n  \"email\": \"test{{$timestamp}}@company.com\",\n  \"phone\": \"+201234567890\",\n  \"country\": \"Egypt\",\n  \"address\": \"Test Address\",\n  \"defaultCurrency\": \"EGP\",\n  \"minimumBalance\": 0\n}"
-            },
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/company/create",
+              "raw": "{{baseUrl}}/gifts/categories",
               "host": ["{{baseUrl}}"],
-              "path": ["company", "create"]
+              "path": ["gifts", "categories"]
             },
-            "description": "Step 2: Create a new company"
+            "description": "Get all gift categories from Resal API. Returns the exact response from Resal API. Requires authentication."
           },
           "response": []
         },
         {
-          "name": "3. Create Company User",
+          "name": "List Gifts",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
+                  "// Parse response",
                   "const response = pm.response.json();",
-                  "pm.test(\"User created\", () => pm.response.to.have.status(201));",
-                  "if (response.success && response.data.user) {",
-                  "    pm.environment.set(\"newUserEmail\", response.data.user.email);",
-                  "    pm.environment.set(\"newUserPassword\", response.data.credentials.defaultPassword);",
-                  "    pm.environment.set(\"newUserId\", response.data.user.userId);",
-                  "}"
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has data array\", function () {",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has meta object with pagination\", function () {",
+                  "    pm.expect(response).to.have.property('meta');",
+                  "    pm.expect(response.meta).to.have.property('total');",
+                  "    pm.expect(response.meta).to.have.property('per_page');",
+                  "    pm.expect(response.meta).to.have.property('current_page');",
+                  "});",
+                  "",
+                  "pm.test(\"Gifts have required fields\", function () {",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        const gift = response.data[0];",
+                  "        pm.expect(gift).to.have.property('id');",
+                  "        pm.expect(gift).to.have.property('title_en');",
+                  "        pm.expect(gift).to.have.property('title_ar');",
+                  "        pm.expect(gift).to.have.property('image');",
+                  "        pm.expect(gift).to.have.property('category');",
+                  "        pm.expect(gift).to.have.property('denominations');",
+                  "    }",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -452,147 +594,515 @@
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"companyId\": {{companyId}},\n  \"email\": \"admin{{$timestamp}}@testcompany.com\",\n  \"displayName\": \"Test Admin\",\n  \"roleId\": 2\n}"
-            },
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/user/create",
+              "raw": "{{baseUrl}}/gifts?page=1&per_page=10&countries=1&all=false",
               "host": ["{{baseUrl}}"],
-              "path": ["user", "create"]
-            },
-            "description": "Step 3: Create a user for the company"
-          },
-          "response": []
-        },
-        {
-          "name": "4. Login as New User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Login successful\", () => pm.response.to.have.status(200));",
-                  "if (response.success && response.data.authentication) {",
-                  "    pm.environment.set(\"userAccessToken\", response.data.authentication.accessToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Step 4: Login as the newly created user with default password"
-          },
-          "response": []
-        },
-        {
-          "name": "5. Change User Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Password changed\", () => pm.response.to.have.status(200));",
-                  "pm.environment.set(\"newUserPassword\", \"MyNewSecure@Pass123\");"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+              "path": ["gifts"],
+              "query": [
                 {
-                  "key": "token",
-                  "value": "{{userAccessToken}}",
-                  "type": "string"
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "countries",
+                  "value": "1",
+                  "description": "Country ID filter (optional)"
+                },
+                {
+                  "key": "all",
+                  "value": "false",
+                  "description": "Include all items (default: false)"
                 }
               ]
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": {{newUserId}},\n  \"newPassword\": \"MyNewSecure@Pass123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/user/set-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["user", "set-password"]
-            },
-            "description": "Step 5: Change the user's password from default to new password"
-          },
-          "response": []
-        },
-        {
-          "name": "6. Login with New Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Login with new password successful\", () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Step 6: Verify login works with the new password"
+            "description": "Get gifts from Resal API with pagination and filters. Returns the exact response from Resal API including all fields like title_en, title_ar, category object, denominations array, meta object, etc. Requires authentication."
           },
           "response": []
         }
       ],
-      "description": "Complete workflow testing from company creation to user login"
+      "description": "Gift catalog and category endpoints from Resal API"
+    },
+    {
+      "name": "Test Workflows",
+      "item": [
+        {
+          "name": "Complete Onboarding Flow",
+          "item": [
+            {
+              "name": "1. Bootstrap System",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Bootstrap successful\", () => pm.expect([200, 201]).to.include(pm.response.code));",
+                      "pm.environment.set(\"superAdminPassword\", \"YourSuperAdminPassword123!\");"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"password\": \"YourSuperAdminPassword123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/bootstrap/super-admin",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["bootstrap", "super-admin"]
+                },
+                "description": "Step 1: Bootstrap the system and create Super Admin"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Login as Super Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Login successful\", () => pm.response.to.have.status(200));",
+                      "if (response.success && response.data.authentication) {",
+                      "    pm.environment.set(\"accessToken\", response.data.authentication.accessToken);",
+                      "    pm.environment.set(\"refreshToken\", response.data.authentication.refreshToken);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"superadmin@kaman.local\",\n  \"password\": \"{{superAdminPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Step 2: Login as Super Admin"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Create New Company",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Company created\", () => pm.response.to.have.status(201));",
+                      "if (response.success && response.data.company) {",
+                      "    pm.environment.set(\"companyId\", response.data.company.companyId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyCode\": \"TESTCO{{$timestamp}}\",\n  \"name\": \"Test Company {{$timestamp}}\",\n  \"email\": \"test{{$timestamp}}@company.com\",\n  \"phone\": \"+201234567890\",\n  \"country\": \"Egypt\",\n  \"address\": \"Test Address\",\n  \"defaultCurrency\": \"EGP\",\n  \"minimumBalance\": 0\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/company/create",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["company", "create"]
+                },
+                "description": "Step 3: Create a new company"
+              },
+              "response": []
+            },
+            {
+              "name": "4. List All Companies",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Companies list retrieved\", () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/company/list",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["company", "list"]
+                },
+                "description": "Step 4: List all companies"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Create Company User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"User created\", () => pm.response.to.have.status(201));",
+                      "if (response.success && response.data.user) {",
+                      "    pm.environment.set(\"newUserEmail\", response.data.user.email);",
+                      "    pm.environment.set(\"newUserPassword\", response.data.credentials.defaultPassword);",
+                      "    pm.environment.set(\"newUserId\", response.data.user.userId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"companyId\": {{companyId}},\n  \"email\": \"admin{{$timestamp}}@testcompany.com\",\n  \"displayName\": \"Test Admin\",\n  \"roleId\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/user/create",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["user", "create"]
+                },
+                "description": "Step 5: Create a user for the company"
+              },
+              "response": []
+            },
+            {
+              "name": "6. Login as New User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Login successful\", () => pm.response.to.have.status(200));",
+                      "if (response.success && response.data.authentication) {",
+                      "    pm.environment.set(\"userAccessToken\", response.data.authentication.accessToken);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Step 6: Login as the newly created user with default password"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Change User Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Password changed\", () => pm.response.to.have.status(200));",
+                      "pm.environment.set(\"newUserPassword\", \"MyNewSecure@Pass123\");"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{userAccessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": {{newUserId}},\n  \"newPassword\": \"MyNewSecure@Pass123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/user/set-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["user", "set-password"]
+                },
+                "description": "Step 7: Change the user's password from default to new password"
+              },
+              "response": []
+            },
+            {
+              "name": "8. Login with New Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Login with new password successful\", () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Step 8: Verify login works with the new password"
+              },
+              "response": []
+            }
+          ],
+          "description": "Complete onboarding flow from bootstrap to user login"
+        },
+        {
+          "name": "Gifts API Flow",
+          "item": [
+            {
+              "name": "1. Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Login successful\", () => pm.response.to.have.status(200));",
+                      "if (response.success && response.data.authentication) {",
+                      "    pm.environment.set(\"accessToken\", response.data.authentication.accessToken);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Step 1: Login to get access token"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Get Gift Categories",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Categories retrieved\", () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/gifts/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["gifts", "categories"]
+                },
+                "description": "Step 2: Get all gift categories"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Get Gifts List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Gifts retrieved\", () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/gifts?page=1&per_page=10&countries=1&all=false",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["gifts"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "10"
+                    },
+                    {
+                      "key": "countries",
+                      "value": "1"
+                    },
+                    {
+                      "key": "all",
+                      "value": "false"
+                    }
+                  ]
+                },
+                "description": "Step 3: Get paginated gifts list with filters"
+              },
+              "response": []
+            }
+          ],
+          "description": "Testing the gifts API endpoints"
+        }
+      ],
+      "description": "Complete workflow testing sequences"
     }
   ],
   "auth": {
