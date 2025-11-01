@@ -57,4 +57,60 @@ public class ResalService
             throw;
         }
     }
+
+    /// <summary>
+    /// Get gifts from Resal API with pagination and filters
+    /// </summary>
+    /// <param name="page">Page number (1-based)</param>
+    /// <param name="perPage">Number of items per page</param>
+    /// <param name="countries">Country ID filter (optional)</param>
+    /// <param name="all">Include all items (optional)</param>
+    public async Task<GiftsResponseDto> GetGiftsAsync(int page = 1, int perPage = 10, int? countries = null, bool all = false)
+    {
+        try
+        {
+            _logger.LogInformation($"Calling Resal API to get gifts - Page: {page}, PerPage: {perPage}, Countries: {countries}, All: {all}");
+
+            // Build query string
+            var queryParams = new List<string>
+            {
+                $"page={page}",
+                $"per_page={perPage}",
+                $"all={all.ToString().ToLower()}"
+            };
+
+            if (countries.HasValue)
+            {
+                queryParams.Add($"countries={countries.Value}");
+            }
+
+            var queryString = string.Join("&", queryParams);
+            var url = $"/gifts?{queryString}";
+
+            _logger.LogInformation($"Calling Resal API URL: {url}");
+
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Resal API returned error status: {response.StatusCode}");
+                throw new HttpRequestException($"Resal API error: {response.StatusCode}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Resal API gifts response received (length: {content.Length})");
+
+            var giftsResponse = JsonSerializer.Deserialize<GiftsResponseDto>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return giftsResponse ?? new GiftsResponseDto();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calling Resal API to get gifts");
+            throw;
+        }
+    }
 }
