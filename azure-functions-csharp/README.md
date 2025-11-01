@@ -578,7 +578,7 @@ Configure GitHub Actions or Azure DevOps for automated deployment.
 | `JwtRefreshExpiresInDays` | Refresh token expiration in days | 7 |
 | `DefaultPassword` | Default password for new users | Kaman@2025 |
 | `Environment` | Environment name | Development |
-| `ResalApiBaseUrl` | Resal API base URL | https://glee-sandbox.resal.me/api/v1 |
+| `ResalApiBaseUrl` | Resal API base URL (must end with /) | https://glee-sandbox.resal.me/api/v1/ |
 | `ResalApiBearerToken` | Resal API authentication token | - |
 
 ## NuGet Packages
