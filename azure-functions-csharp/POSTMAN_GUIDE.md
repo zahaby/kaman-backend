@@ -36,13 +36,45 @@ Before testing, update the following environment variables:
 
 **For Local Development:**
 - `baseUrl`: Should be `http://localhost:7071/api` (already set)
+- `functionKey`: Leave empty for local development (function keys are optional locally)
 - `userEmail`: Your super admin email (default: `superadmin@kaman.local`)
 - `userPassword`: Your super admin password
 
 **For Azure Production:**
 - `baseUrl`: Replace with your actual Azure Function App URL (e.g., `https://kaman-prod.azurewebsites.net/api`)
+- `functionKey`: **REQUIRED** - Get from Azure Portal ([see how](#getting-your-function-key))
 - `userEmail`: Your super admin email
 - `userPassword`: Your super admin password
+
+#### Getting Your Function Key
+
+All API endpoints require an Azure Function key sent in the `x-functions-key` header for security.
+
+**Method 1: Azure Portal**
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Navigate to your Function App
+3. Click "App keys" (under Function App settings)
+4. Copy the **default** host key value
+5. Paste into Postman's `functionKey` environment variable
+
+**Method 2: Azure CLI**
+```bash
+az functionapp keys list \
+  --name your-function-app-name \
+  --resource-group kaman_group \
+  --query masterKey \
+  --output tsv
+```
+
+**Method 3: Collection Variable**
+
+Alternatively, set the function key at the collection level:
+1. Click on the collection name
+2. Go to "Variables" tab
+3. Set `functionKey` value
+4. This applies to all environments
+
+📖 **For detailed instructions, see [Function Keys Guide](./FUNCTION_KEYS_GUIDE.md)**
 
 **To edit environment variables:**
 1. Click the eye icon next to the environment dropdown
@@ -543,6 +575,7 @@ Requests use Postman's dynamic variables for testing:
 | Variable | Description | Auto-populated | Example | Used By |
 |----------|-------------|----------------|---------|---------|
 | `baseUrl` | API base URL | No | `http://localhost:7071/api` | All requests |
+| `functionKey` | Azure Function key for authorization | No | `abc123...xyz` | All requests (x-functions-key header) |
 | `accessToken` | JWT access token (60 min) | Yes (after login) | `eyJhbGc...` | Authenticated endpoints |
 | `refreshToken` | JWT refresh token (7 days) | Yes (after login) | `eyJhbGc...` | Refresh endpoint |
 | `userId` | Current user ID | Yes (after login) | `1` | Set Password |

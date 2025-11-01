@@ -1122,7 +1122,17 @@
         "type": "text/javascript",
         "exec": [
           "// Pre-request script runs before each request",
-          "console.log('Request URL:', pm.request.url.toString());"
+          "console.log('Request URL:', pm.request.url.toString());",
+          "",
+          "// Add x-functions-key header if the variable is set",
+          "const functionKey = pm.collectionVariables.get('functionKey');",
+          "if (functionKey && functionKey !== 'your-function-key-here') {",
+          "    pm.request.headers.add({",
+          "        key: 'x-functions-key',",
+          "        value: functionKey",
+          "    });",
+          "    console.log('Added x-functions-key header');",
+          "}"
         ]
       }
     },
@@ -1142,6 +1152,11 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:7071/api",
+      "type": "string"
+    },
+    {
+      "key": "functionKey",
+      "value": "your-function-key-here",
       "type": "string"
     }
   ]

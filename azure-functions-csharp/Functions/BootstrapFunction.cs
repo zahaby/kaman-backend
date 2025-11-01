@@ -32,7 +32,7 @@ public class BootstrapFunction
 
     [Function("Bootstrap")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "bootstrap/super-admin")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "bootstrap/super-admin")] HttpRequestData req)
     {
         _logger.LogWarning("Bootstrap endpoint called - this should only be used for initial setup!");
 

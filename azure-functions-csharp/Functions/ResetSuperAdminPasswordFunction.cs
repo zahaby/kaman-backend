@@ -28,7 +28,7 @@ public class ResetSuperAdminPasswordFunction
 
     [Function("ResetSuperAdminPassword")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/reset-superadmin-password")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "auth/reset-superadmin-password")] HttpRequestData req)
     {
         _logger.LogWarning("ResetSuperAdminPassword endpoint called - emergency password reset!");
 

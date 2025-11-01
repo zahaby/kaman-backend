@@ -26,7 +26,7 @@ public class CreateCompanyFunction
 
     [Function("CreateCompany")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "company/create")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "company/create")] HttpRequestData req)
     {
         _logger.LogInformation("CreateCompany function processing request");
 

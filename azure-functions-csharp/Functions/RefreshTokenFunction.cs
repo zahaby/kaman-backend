@@ -26,7 +26,7 @@ public class RefreshTokenFunction
 
     [Function("RefreshToken")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/refresh")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "auth/refresh")] HttpRequestData req)
     {
         _logger.LogInformation("RefreshToken function processing request");
 

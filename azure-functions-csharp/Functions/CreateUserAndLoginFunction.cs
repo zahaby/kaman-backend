@@ -29,7 +29,7 @@ public class CreateUserAndLoginFunction
 
     [Function("CreateUserAndLogin")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "user/create")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "user/create")] HttpRequestData req)
     {
         _logger.LogInformation("CreateUserAndLogin function processing request");
 

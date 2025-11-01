@@ -29,7 +29,7 @@ public class ListGiftCategoriesFunction
 
     [Function("ListGiftCategories")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "gifts/categories")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "gifts/categories")] HttpRequestData req)
     {
         _logger.LogInformation("ListGiftCategories function processing request");
 

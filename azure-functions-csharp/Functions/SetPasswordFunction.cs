@@ -26,7 +26,7 @@ public class SetPasswordFunction
 
     [Function("SetPassword")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "user/set-password")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "user/set-password")] HttpRequestData req)
     {
         _logger.LogInformation("SetPassword function processing request");
 
